@@ -1,4 +1,5 @@
 import puppeteer from 'puppeteer'
+import {readFileSync} from 'fs'
 require('dotenv').config()
 
 async function init() {
@@ -26,6 +27,8 @@ async function init() {
     await dde?.click()
     await page.waitForNetworkIdle()
     await page.screenshot({clip:{x:265, y:670, width:692, height:60}, path:"./out.png"})
+    var bitmap=readFileSync("./out.png")
+    console.log(Buffer.from(bitmap).toString('base64'))
     browser.close()
     // await page.waitForTimeout(5000)
     // await page.mouse.click(1030,20)
