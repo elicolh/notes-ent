@@ -62,6 +62,6 @@ setInterval(takeScreenshot, 60 * 1000)
 let app = express()
 app.get("/", (req, res) => {
     if (req.headers.authorization != process.env.AUTH_HEADER) return
-    res.sendFile(__dirname + "/out.png")
+    res.sendFile("/root/notes-ent/out.png")
 })
 app.listen("7496", () => console.log("server started"))
