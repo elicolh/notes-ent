@@ -1,61 +1,67 @@
-"use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
+import puppeteer from 'puppeteer'
+import dotenv from 'dotenv'
+dotenv.config()
+import { readFileSync } from 'fs'
+import express from 'express'
+// import { getTokenSourceMapRange } from 'typescript'
+
+async function takeScreenshot() {
+    console.log("starting screen")
+    const browser = await puppeteer.launch({
+        headless: false,
+        args: ['--no-sandbox', "--window-size=1080,720"],
+        // userDataDir: './userData',
+    })
+    const page = await browser.newPage();
+    await page.setViewport({
+        width: 1580,
+        height: 720,
+        deviceScaleFactor: 1,
     });
-};
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const puppeteer_1 = __importDefault(require("puppeteer"));
-const express_1 = __importDefault(require("express"));
-require('dotenv').config();
-function takeScreenshot() {
-    return __awaiter(this, void 0, void 0, function* () {
-        console.log("starting screen");
-        const browser = yield puppeteer_1.default.launch({
-            headless: false,
-            args: ['--no-sandbox', "--window-size=1080,720"],
-            // userDataDir: './userData',
-        });
-        const page = yield browser.newPage();
-        yield page.setViewport({
-            width: 1080,
-            height: 720,
-            deviceScaleFactor: 1,
-        });
-        yield page.goto('https://cas.utt.fr/cas/login?service=https://ent2.utt.fr/uPortal/Login');
-        let usr = yield page.waitForSelector("#username");
-        yield (usr === null || usr === void 0 ? void 0 : usr.type(process.env.UTT_USERNAME));
-        let mdp = yield page.waitForSelector("#password");
-        yield (mdp === null || mdp === void 0 ? void 0 : mdp.type(process.env.UTT_PASSWORD));
-        let valid = yield page.waitForSelector("input.btn-submit");
-        yield (valid === null || valid === void 0 ? void 0 : valid.click());
-        console.log("connected");
-        let forma = yield page.waitForXPath("//*/a[contains(@class,\"portal-navigation-link\") and contains(@title, \"Formation\")]");
-        yield (forma === null || forma === void 0 ? void 0 : forma.hover());
-        let dde = yield page.waitForXPath("//*/li[@id=\"uPfname_suivi-etudiants\"]/a");
-        yield (dde === null || dde === void 0 ? void 0 : dde.click());
-        yield page.waitForNetworkIdle();
-        console.log("taking screen");
-        yield page.screenshot({ clip: { x: 265, y: 670, width: 692, height: 60 }, path: "./out.png" });
-        yield page.screenshot({ path: "./tout.png" });
-        // var bitmap=readFileSync("./out.png")
-        // console.log(Buffer.from(bitmap).toString('base64'))
-        browser.close();
-    });
+    await page.goto('https://cas.utt.fr/cas/login?service=https://ent2.utt.fr/uPortal/Login');
+    let usr = await page.waitForSelector("#username")
+    await usr.type(process.env.UTT_USERNAME)
+    let mdp = await page.waitForSelector("#password")
+    await mdp.type(process.env.UTT_PASSWORD)
+    let valid = await page.waitForSelector("input.btn-submit")
+    await valid.click()
+    console.log("connected")
+    let forma = await page.waitForXPath("//*/a[contains(@class,\"portal-navigation-link\") and contains(@title, \"Formation\")]")
+    await forma.hover()
+    let dde = await page.waitForXPath("//*/li[@id=\"uPfname_suivi-etudiants\"]/a")
+    await dde.click()
+    let elementHandle = await page.waitForSelector("iframe")
+    let frame = await elementHandle.contentFrame()
+    await page.waitForNetworkIdle()
+    let ligne = (await frame.$x("//*/td[contains(@class,\"sem\") and contains(span, \"TC 3\")]/parent::tr"))[0]
+    // console.log(ligne)
+    // let rect = await ligne.evaluate(e=>e.getBoundingClientRect())
+    let rect = await frame.evaluate((e) => {
+        let { x, y, width, height } = e.getBoundingClientRect()
+        return { x, y, width, height }
+    }, ligne)
+    let frameRect = await page.evaluate((e) => {
+        let { x, y } = e.getBoundingClientRect()
+        return { x, y }
+    }, elementHandle)
+    rect.x+=frameRect.x
+    rect.y+=frameRect.y
+    // let rect = await ligne?.evaluate(e=>e.getBoundingClientRect())
+    console.log(rect)
+
+    console.log("taking screen")
+    await page.screenshot({ clip: rect, path: "./out.png" })
+    await page.screenshot({ path: "./tout.png" })
+    // var bitmap=readFileSync("./out.png")
+    // console.log(Buffer.from(bitmap).toString('base64'))
+    browser.close()
 }
-takeScreenshot();
-setInterval(takeScreenshot, 60 * 1000);
-let app = (0, express_1.default)();
+takeScreenshot()
+setInterval(takeScreenshot, 60 * 1000)
+
+let app = express()
 app.get("/", (req, res) => {
-    if (req.headers.authorization != process.env.AUTH_HEADER)
-        return;
-    res.sendFile(__dirname + "/out.png");
-});
-app.listen("7496", () => console.log("server started"));
+    if (req.headers.authorization != process.env.AUTH_HEADER) return
+    res.sendFile(__dirname + "/out.png")
+})
+app.listen("7496", () => console.log("server started"))

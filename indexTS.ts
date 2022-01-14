@@ -1,6 +1,7 @@
 import puppeteer from 'puppeteer'
 import {readFileSync} from 'fs'
 import express from 'express'
+import { getTokenSourceMapRange } from 'typescript'
 require('dotenv').config()
 
 async function takeScreenshot() {
@@ -28,7 +29,14 @@ async function takeScreenshot() {
     await forma?.hover()
     let dde = await page.waitForXPath("//*/li[@id=\"uPfname_suivi-etudiants\"]/a")
     await dde?.click()
+    let elementHandle = await page.waitForSelector("iframe")
+    let frame = await elementHandle?.contentFrame()
     await page.waitForNetworkIdle()
+    let ligne = (await frame?.$x("//*/td[contains(@class,\"sem\") and contains(span, \"TC 3\")]/parent::tr"))?[0]
+    ligne.
+    // let rect = await frame?.evaluate((e)=>e.textContent, ligne)
+    // let rect = await ligne?.evaluate(e=>e.getBoundingClientRect())
+    console.log(rect)
     console.log("taking screen")
     await page.screenshot({clip:{x:265, y:670, width:692, height:60}, path:"./out.png"})
     await page.screenshot({path:"./tout.png"})
