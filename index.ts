@@ -1,8 +1,9 @@
 import puppeteer from 'puppeteer'
 import {readFileSync} from 'fs'
+import express from 'express'
 require('dotenv').config()
 
-async function init() {
+async function takeScreenshot() {
     const browser = await puppeteer.launch({
         headless: true,
         args: ['--no-sandbox', "--window-size=1080,720"],
@@ -27,31 +28,16 @@ async function init() {
     await dde?.click()
     await page.waitForNetworkIdle()
     await page.screenshot({clip:{x:265, y:670, width:692, height:60}, path:"./out.png"})
-    var bitmap=readFileSync("./out.png")
-    console.log(Buffer.from(bitmap).toString('base64'))
+    // var bitmap=readFileSync("./out.png")
+    // console.log(Buffer.from(bitmap).toString('base64'))
     browser.close()
-    // await page.waitForTimeout(5000)
-    // await page.mouse.click(1030,20)
-    // await page.waitForTimeout(3000)
-    // await page.mouse.click(425, 216)
-    // await page.keyboard.type(process.env.UTT_USERNAME as string)
-    // await page.mouse.click(437,27)
-    // await page.keyboard.type(process.env.UTT_PASSWORD as string)
-    // await page.mouse.click(475,323)
-    // await page.waitForTimeout(3000)
-    // await page.mouse.click(280,100)
-    // await page.mouse.click(280,120)
-    // await page.waitForTimeout(10000)
-    // await page.screenshot({clip:{x:265, y:670, width:692, height:60}, path:"./out.png"})
-    // await page.screenshot({path:"./out.png"})
-    // console.log("screen prit")
-    // browser.close()
-    // if (await page.evaluate(() => window.location.href) != 'https://www.instagram.com/accounts/edit/') {
-    //     console.log("attempting to connect")
-    //     console.log("potentially connected")
-    //     await page.goto('https://www.instagram.com/accounts/edit/')
-    // } else {
-    //     console.log("already connected")
-    // }
 }
-init()
+takeScreenshot()
+setInterval(takeScreenshot, 60 * 1000)
+
+let app = express()
+app.get("/", (req,res)=>{
+    if(req.headers.authorization != process.env.AUTH_HEADER) return
+    res.sendFile(__dirname + "/out.png")
+})
+app.listen("7496", ()=>console.log("server started"))
