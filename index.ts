@@ -4,6 +4,7 @@ import express from 'express'
 require('dotenv').config()
 
 async function takeScreenshot() {
+    console.log("starting screen")
     const browser = await puppeteer.launch({
         headless: true,
         args: ['--no-sandbox', "--window-size=1080,720"],
@@ -22,12 +23,15 @@ async function takeScreenshot() {
     await mdp?.type(process.env.UTT_PASSWORD as string)
     let valid = await page.waitForSelector("input.btn-submit")
     await valid?.click()
+    console.log("connected")
     let forma = await page.waitForXPath("//*/a[contains(@class,\"portal-navigation-link\") and contains(@title, \"Formation\")]")
     await forma?.hover()
     let dde = await page.waitForXPath("//*/li[@id=\"uPfname_suivi-etudiants\"]/a")
     await dde?.click()
     await page.waitForNetworkIdle()
+    console.log("taking screen")
     await page.screenshot({clip:{x:265, y:670, width:692, height:60}, path:"./out.png"})
+    await page.screenshot({path:"./tout.png"})
     // var bitmap=readFileSync("./out.png")
     // console.log(Buffer.from(bitmap).toString('base64'))
     browser.close()
