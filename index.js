@@ -17,8 +17,9 @@ const express_1 = __importDefault(require("express"));
 require('dotenv').config();
 function takeScreenshot() {
     return __awaiter(this, void 0, void 0, function* () {
+        console.log("starting screen");
         const browser = yield puppeteer_1.default.launch({
-            headless: true,
+            headless: false,
             args: ['--no-sandbox', "--window-size=1080,720"],
             // userDataDir: './userData',
         });
@@ -35,12 +36,15 @@ function takeScreenshot() {
         yield (mdp === null || mdp === void 0 ? void 0 : mdp.type(process.env.UTT_PASSWORD));
         let valid = yield page.waitForSelector("input.btn-submit");
         yield (valid === null || valid === void 0 ? void 0 : valid.click());
+        console.log("connected");
         let forma = yield page.waitForXPath("//*/a[contains(@class,\"portal-navigation-link\") and contains(@title, \"Formation\")]");
         yield (forma === null || forma === void 0 ? void 0 : forma.hover());
         let dde = yield page.waitForXPath("//*/li[@id=\"uPfname_suivi-etudiants\"]/a");
         yield (dde === null || dde === void 0 ? void 0 : dde.click());
         yield page.waitForNetworkIdle();
+        console.log("taking screen");
         yield page.screenshot({ clip: { x: 265, y: 670, width: 692, height: 60 }, path: "./out.png" });
+        yield page.screenshot({ path: "./tout.png" });
         // var bitmap=readFileSync("./out.png")
         // console.log(Buffer.from(bitmap).toString('base64'))
         browser.close();

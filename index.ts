@@ -6,13 +6,13 @@ require('dotenv').config()
 async function takeScreenshot() {
     console.log("starting screen")
     const browser = await puppeteer.launch({
-        headless: true,
+        headless: false,
         args: ['--no-sandbox', "--window-size=1080,720"],
         // userDataDir: './userData',
     })
     const page = await browser.newPage();
     await page.setViewport({
-        width: 1080,
+        width: 1580,
         height: 720,
         deviceScaleFactor: 1,
     });
