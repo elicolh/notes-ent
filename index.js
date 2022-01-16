@@ -7,7 +7,7 @@ dotenv.config()
 async function takeScreenshot() {
     console.log("starting screen")
     const browser = await puppeteer.launch({
-        headless: true,
+        headless: false,
         args: ['--no-sandbox', "--window-size=1080,720"],
         // userDataDir: './userData',
     })
@@ -39,17 +39,26 @@ async function takeScreenshot() {
         let { x, y, width, height } = e.getBoundingClientRect()
         return { x, y, width, height }
     }, ligne)
+    let lastCell = (await frame.$x("//*/td[contains(@class,\"sem\") and contains(span, \"TC 3\")]/parent::tr/td[position()=5]"))[0]
+    let lastCellRect = await frame.evaluate((e)=>{
+        let { x, y, width, height } = e.getBoundingClientRect()
+        return { x, y, width, height }
+    }, lastCell)
     let frameRect = await page.evaluate((e) => {
         let { x, y } = e.getBoundingClientRect()
         return { x, y }
     }, elementHandle)
-    rect.x += frameRect.x
-    rect.y += frameRect.y
+    let clip = {
+        x:rect.x+frameRect.x,
+        y:rect.y+frameRect.y,
+        width:lastCellRect.x+lastCellRect.width-rect.x,
+        height:rect.height
+    }
     // let rect = await ligne?.evaluate(e=>e.getBoundingClientRect())
     console.log(rect)
 
     console.log("taking screen")
-    await page.screenshot({ clip: rect, path: "./out.png" })
+    await page.screenshot({ clip: clip, path: "./out.png" })
     await page.screenshot({ path: "./tout.png" })
     // var bitmap=readFileSync("./out.png")
     // console.log(Buffer.from(bitmap).toString('base64'))
