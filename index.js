@@ -7,7 +7,7 @@ dotenv.config()
 async function takeScreenshot() {
     console.log("starting screen")
     const browser = await puppeteer.launch({
-        headless: false,
+        headless: true,
         args: ['--no-sandbox', "--window-size=1080,720"],
         // userDataDir: './userData',
     })
