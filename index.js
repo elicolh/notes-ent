@@ -1,8 +1,7 @@
 import puppeteer from 'puppeteer'
 import dotenv from 'dotenv'
+import { spawn } from 'child_process'
 dotenv.config()
-import { readFileSync } from 'fs'
-import express from 'express'
 // import { getTokenSourceMapRange } from 'typescript'
 
 async function takeScreenshot() {
@@ -44,8 +43,8 @@ async function takeScreenshot() {
         let { x, y } = e.getBoundingClientRect()
         return { x, y }
     }, elementHandle)
-    rect.x+=frameRect.x
-    rect.y+=frameRect.y
+    rect.x += frameRect.x
+    rect.y += frameRect.y
     // let rect = await ligne?.evaluate(e=>e.getBoundingClientRect())
     console.log(rect)
 
@@ -54,15 +53,13 @@ async function takeScreenshot() {
     await page.screenshot({ path: "./tout.png" })
     // var bitmap=readFileSync("./out.png")
     // console.log(Buffer.from(bitmap).toString('base64'))
-    browser.close()
+    await browser.close()
+    spawn('node', ['server.js'], {
+        detached: true
+    }).on("spawn", () => {
+        setTimeout(() => {
+            process.exit()
+        }, 2000)
+    })
 }
 takeScreenshot()
-
-let app = express()
-app.get("/", (req, res) => {
-    if (req.headers.authorization != process.env.AUTH_HEADER) return
-    res.sendFile("/root/notes-ent/out.png")
-    s.close()    
-})
-
-let s = app.listen("7496", () => console.log("server started"))
